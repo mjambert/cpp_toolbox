@@ -8,6 +8,10 @@ import shutil
 
 import sys
 
+# TODO1 : if ambiguity, prompt to solve it
+# TODO2 : extensions filter = *.h hpp, c, cpp
+
+
 class RebaseIncludeRule:
 
     old_include_dir = None
@@ -35,9 +39,13 @@ def rebase_includes_in_file(file, rules):
     new_file = os.fdopen(new_handle, 'w')
     with open(file) as f:
         sys.stdout.write("Processing file %s\n" % file)
+        any_rebase_done = False
         for line in f:
             stripped_line = line.strip()
             match_obj = re.match('#include "(.*)"', stripped_line)
+            if match_obj == None: 
+                match_obj = re.match('#include <(.*)>', stripped_line)
+
             if match_obj == None: 
                 new_file.write(line)
             else:
@@ -45,12 +53,14 @@ def rebase_includes_in_file(file, rules):
                     rebased_file_path = rebase_include_line(file, match_obj.group(1), rules)
                     rebased_line = '#include "%s"\n' % rebased_file_path
                     new_file.write(rebased_line)
+                    any_rebase_done = True
                 except RuntimeError, message:
                     sys.stdout.write(str(message))
                     new_file.write(line)
 
         new_file.close()
-        shutil.copyfile(new_file_path, file)
+        if any_rebase_done:
+            shutil.copyfile(new_file_path, file)
         os.remove(new_file_path)
 
 

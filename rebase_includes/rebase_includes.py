@@ -27,7 +27,7 @@ def rebase_include_line(file, included_file_path, rules):
     for _, rule in rules.iteritems():
         if os.path.isfile(os.path.join(rule.old_include_dir, included_file_path)):
             return rule.rebase(included_file_path)
-    sys.stdout.write("Include path '%s' cannot be resolved. Maybe included from a system dir, skipping it !\n" % included_file_path)
+    raise RuntimeError("Include path '%s' cannot be resolved. Maybe included from a system dir, skipping it !\n" % included_file_path)
 
 
 def rebase_includes_in_file(file, rules):
@@ -45,7 +45,8 @@ def rebase_includes_in_file(file, rules):
                     rebased_file_path = rebase_include_line(file, match_obj.group(1), rules)
                     rebased_line = '#include "%s"\n' % rebased_file_path
                     new_file.write(rebased_line)
-                except:
+                except RuntimeError, message:
+                    sys.stdout.write(str(message))
                     new_file.write(line)
 
         new_file.close()
